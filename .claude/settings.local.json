@@ -4,7 +4,8 @@
       "Bash(java:*)",
       "Bash(sudo apt:*)",
       "Bash(chmod:*)",
-      "Bash(./mvnw:*)"
+      "Bash(./mvnw:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
