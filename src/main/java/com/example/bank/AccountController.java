@@ -57,9 +57,13 @@ public class AccountController {
         
         Account account = accountOpt.get();
         List<Transaction> transactions = accountService.getTransactionHistory(id);
+        List<Account> otherAccounts = accountService.getAllAccounts().stream()
+            .filter(acc -> !acc.getId().equals(id))
+            .toList();
         
         model.addAttribute("account", account);
         model.addAttribute("transactions", transactions);
+        model.addAttribute("otherAccounts", otherAccounts);
         return "account-detail";
     }
     
@@ -87,6 +91,22 @@ public class AccountController {
             accountService.withdraw(id, amount, description);
             redirectAttributes.addFlashAttribute("successMessage", 
                 "출금이 완료되었습니다. 금액: ₩" + amount);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/accounts/" + id;
+    }
+    
+    @PostMapping("/accounts/{id}/transfer")
+    public String transfer(@PathVariable Long id,
+                          @RequestParam Long toAccountId,
+                          @RequestParam BigDecimal amount,
+                          @RequestParam(required = false) String description,
+                          RedirectAttributes redirectAttributes) {
+        try {
+            accountService.transfer(id, toAccountId, amount, description);
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "송금이 완료되었습니다. 수취인: 계좌번호 " + toAccountId + "번, 금액: ₩" + amount);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

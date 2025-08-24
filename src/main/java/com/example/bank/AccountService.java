@@ -62,4 +62,43 @@ public class AccountService {
         
         return account.getTransactions();
     }
+    
+    public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
+        // 입력 검증
+        if (fromAccountId == null || toAccountId == null) {
+            throw new IllegalArgumentException("Account IDs cannot be null");
+        }
+        
+        if (fromAccountId.equals(toAccountId)) {
+            throw new IllegalArgumentException("Cannot transfer to the same account");
+        }
+        
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        Account fromAccount = accounts.get(fromAccountId);
+        Account toAccount = accounts.get(toAccountId);
+        
+        if (fromAccount == null) {
+            throw new IllegalArgumentException("Sender account not found");
+        }
+        
+        if (toAccount == null) {
+            throw new IllegalArgumentException("Recipient account not found");
+        }
+        
+        // Deadlock 방지를 위해 ID 순서로 동기화
+        Account firstLock = fromAccountId < toAccountId ? fromAccount : toAccount;
+        Account secondLock = fromAccountId < toAccountId ? toAccount : fromAccount;
+        
+        synchronized (firstLock) {
+            synchronized (secondLock) {
+                // 송금인 계좌에서 출금
+                fromAccount.transferOut(amount, description, toAccountId);
+                // 수취인 계좌에 입금
+                toAccount.transferIn(amount, description, fromAccountId);
+            }
+        }
+    }
 }
