@@ -45,7 +45,71 @@
                                 <p class="card-text">
                                     <small class="text-muted">개설일: <span th:text="${#temporals.format(account.createdAt, 'yyyy-MM-dd HH:mm')}"></span></small>
                                 </p>
-                                <a th:href="@{/accounts/{id}(id=${account.id})}" class="btn btn-outline-primary">계좌 상세</a>
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/accounts/{id}(id=${account.id})}" class="btn btn-outline-primary">계좌 상세</a>
+                                    <div th:if="${#lists.size(accounts) <= 1}" class="text-center py-2">
+                                        <small class="text-muted d-block">송금할 계좌가 없습니다</small>
+                                        <a href="/accounts/new" class="btn btn-outline-success btn-sm">새 계좌 개설</a>
+                                    </div>
+                                    <button th:if="${#lists.size(accounts) > 1}" type="button" class="btn btn-outline-warning" 
+                                            data-bs-toggle="modal" 
+                                            th:data-bs-target="'#quickTransferModal' + ${account.id}">
+                                        💳 빠른 송금
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 빠른 송금 모달 -->
+                        <div th:if="${#lists.size(accounts) > 1}" class="modal fade" th:id="'quickTransferModal' + ${account.id}" tabindex="-1" 
+                             th:aria-labelledby="'quickTransferModalLabel' + ${account.id}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" th:id="'quickTransferModalLabel' + ${account.id}">
+                                            💳 빠른 송금 - 계좌번호 <span th:text="${account.id}"></span>번
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form th:action="@{/accounts/{id}/transfer(id=${account.id})}" method="post">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="'quickTransferToAccount' + ${account.id}" class="form-label">수취인 계좌</label>
+                                                <select class="form-select" 
+                                                        th:id="'quickTransferToAccount' + ${account.id}" 
+                                                        name="toAccountId" required>
+                                                    <option value="">계좌를 선택하세요</option>
+                                                    <option th:each="otherAccount : ${accounts}" 
+                                                            th:if="${otherAccount.id != account.id}"
+                                                            th:value="${otherAccount.id}"
+                                                            th:text="'계좌번호 ' + ${otherAccount.id} + '번 - ' + ${otherAccount.accountHolder} + ' (잔액: ₩' + ${#numbers.formatDecimal(otherAccount.balance, 0, 'COMMA', 0, 'POINT')} + ')'">
+                                                    </option>
+                                                </select>
+                                                <div class="form-text text-info">
+                                                    💡 드롭다운에서 송금할 계좌를 선택하세요. 본인 계좌는 표시되지 않습니다.
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="'quickTransferAmount' + ${account.id}" class="form-label">송금액 (원)</label>
+                                                <input type="number" class="form-control" 
+                                                       th:id="'quickTransferAmount' + ${account.id}" 
+                                                       name="amount" min="1" step="1" 
+                                                       th:max="${account.balance}" required>
+                                                <div class="form-text">최대 송금 가능 금액: ₩<span th:text="${#numbers.formatDecimal(account.balance, 0, 'COMMA', 0, 'POINT')}"></span></div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="'quickTransferDescription' + ${account.id}" class="form-label">송금 메모</label>
+                                                <input type="text" class="form-control" 
+                                                       th:id="'quickTransferDescription' + ${account.id}" 
+                                                       name="description" placeholder="예: 용돈, 대출 상환 등">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                            <button type="submit" class="btn btn-warning">💳 송금하기</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>

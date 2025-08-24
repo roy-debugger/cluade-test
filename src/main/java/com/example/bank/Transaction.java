@@ -9,7 +9,9 @@ public class Transaction {
     
     public enum TransactionType {
         DEPOSIT("입금"),
-        WITHDRAWAL("출금");
+        WITHDRAWAL("출금"),
+        TRANSFER_OUT("송금"),
+        TRANSFER_IN("입금받음");
         
         private final String displayName;
         
@@ -28,14 +30,20 @@ public class Transaction {
     private final BigDecimal amount;
     private final String description;
     private final LocalDateTime timestamp;
+    private final Long targetAccountId; // 송금 시 상대방 계좌번호
     
     public Transaction(Long accountId, TransactionType type, BigDecimal amount, String description) {
+        this(accountId, type, amount, description, null);
+    }
+    
+    public Transaction(Long accountId, TransactionType type, BigDecimal amount, String description, Long targetAccountId) {
         this.id = ID_GENERATOR.getAndIncrement();
         this.accountId = accountId;
         this.type = type;
         this.amount = amount;
         this.description = description;
         this.timestamp = LocalDateTime.now();
+        this.targetAccountId = targetAccountId;
     }
     
     public Long getId() {
@@ -60,5 +68,9 @@ public class Transaction {
     
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+    
+    public Long getTargetAccountId() {
+        return targetAccountId;
     }
 }

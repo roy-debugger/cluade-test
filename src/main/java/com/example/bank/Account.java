@@ -64,6 +64,40 @@ public class Account {
         ));
     }
     
+    public synchronized void transferOut(BigDecimal amount, String description, Long targetAccountId) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        if (this.balance.compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient balance");
+        }
+        
+        this.balance = this.balance.subtract(amount);
+        this.transactions.add(new Transaction(
+            this.id,
+            Transaction.TransactionType.TRANSFER_OUT,
+            amount,
+            description != null ? description : "Transfer",
+            targetAccountId
+        ));
+    }
+    
+    public synchronized void transferIn(BigDecimal amount, String description, Long sourceAccountId) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        this.balance = this.balance.add(amount);
+        this.transactions.add(new Transaction(
+            this.id,
+            Transaction.TransactionType.TRANSFER_IN,
+            amount,
+            description != null ? description : "Transfer received",
+            sourceAccountId
+        ));
+    }
+    
     public Long getId() {
         return id;
     }
