@@ -5,7 +5,11 @@
       "Bash(sudo apt:*)",
       "Bash(chmod:*)",
       "Bash(./mvnw:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(winget install:*)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Microsoft/jdk-17.0.16.8-hotspot\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
