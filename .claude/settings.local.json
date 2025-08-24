@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java:*)",
+      "Bash(sudo apt:*)",
+      "Bash(chmod:*)",
+      "Bash(./mvnw:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
