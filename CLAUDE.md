@@ -79,3 +79,24 @@ java -jar target/bank-simulator-1.0.0.jar
 - Unit tests focus on `AccountService` business logic
 - Integration tests verify Spring context loading
 - Key test scenarios: account creation, deposits, withdrawals, insufficient balance handling
+
+## 프로젝트 문서
+
+코드 생성 및 개발 시 다음 문서들을 참조하여 일관성을 유지하세요:
+
+### 📋 API 문서 (docs/api.md)
+- 웹 엔드포인트 명세와 파라미터
+- AccountService 메서드 시그니처 
+- 에러 처리 패턴
+
+### 🏗️ 아키텍처 문서 (docs/architecture.md)  
+- 동시성 제어 방식 (ConcurrentHashMap, synchronized, AtomicLong)
+- 계층화 아키텍처 (Controller → Service → Entity)
+- 데이터 모델과 관계
+
+### 🔧 개발 가이드 (docs/development-guide.md)
+- 코딩 표준 (명명 규칙, 패키지 구조)
+- 테스트 작성 패턴 (AAA 패턴, 네이밍 규칙)
+- 새로운 기능 개발 절차
+
+**중요**: 새로운 코드 작성 시 이 문서들의 패턴과 규칙을 따라 일관성을 유지하세요.
