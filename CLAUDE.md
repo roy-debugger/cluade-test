@@ -25,8 +25,8 @@ java -jar target/bank-simulator-1.0.0.jar
 # Run specific test class
 ./mvnw test -Dtest=AccountServiceTest
 
-# Run single test method
-./mvnw test -Dtest=AccountServiceTest#createAccount_Success
+# Run single test method (Java 표준 명명 규칙 적용)
+./mvnw test -Dtest=AccountServiceTest#createAccount_WithValidInput_Success
 ```
 
 ### Building
@@ -36,6 +36,9 @@ java -jar target/bank-simulator-1.0.0.jar
 
 # Skip tests during build
 ./mvnw clean package -DskipTests
+
+# Code quality check with build
+./mvnw clean verify
 ```
 
 ## Application Architecture
@@ -44,6 +47,8 @@ java -jar target/bank-simulator-1.0.0.jar
 - **Completely In-Memory**: Uses `ConcurrentHashMap` for data storage, no database
 - **Thread-Safe Operations**: `AtomicLong` for ID generation, `synchronized` methods for transactions
 - **Data Reset by Design**: All data is lost on server restart (intentional behavior)
+- **Java Coding Standards**: Follows Google Java Style Guide and eGovFramework standards
+- **Clean Architecture**: Layered architecture (Controller → Service → Domain)
 
 ### Key Components
 
@@ -54,21 +59,23 @@ java -jar target/bank-simulator-1.0.0.jar
 
 #### Business Logic
 - `AccountService.java`: Core business logic, manages the in-memory account storage
-- All account operations (create, deposit, withdraw) are centralized here
+- All account operations (create, deposit, withdraw, transfer) are centralized here
 - Transaction history is maintained within each `Account` object
+- Deadlock prevention using ordered locking mechanism for transfers
 
 #### Web Layer
 - `AccountController.java`: Spring MVC controller handling all web requests
 - Thymeleaf templates in `src/main/resources/templates/`:
   - `accounts.html`: Account listing page
   - `account-form.html`: Account creation form
-  - `account-detail.html`: Account details with transaction forms
+  - `account-detail.html`: Account details with transaction forms (includes dropdown transfer)
 
 ### Concurrency Handling
 - `ConcurrentHashMap` ensures thread-safe account storage
 - `Account` methods use `synchronized` for balance modifications
 - `AtomicLong` generators ensure unique IDs across threads
 - Transaction lists are defensively copied when returned
+- Transfer operations use ordered locking (by account ID) to prevent deadlocks
 
 ### Configuration
 - **Port**: 9090 (configured in `application.properties`)
@@ -78,7 +85,53 @@ java -jar target/bank-simulator-1.0.0.jar
 ### Testing Strategy
 - Unit tests focus on `AccountService` business logic
 - Integration tests verify Spring context loading
-- Key test scenarios: account creation, deposits, withdrawals, insufficient balance handling
+- Test naming convention: `methodName_condition_expectedResult`
+- Key test scenarios: account creation, deposits, withdrawals, transfers, insufficient balance handling
+- Use Given-When-Then pattern for test structure
+
+## 📋 Java Coding Standards
+
+### Naming Conventions
+- **Classes**: PascalCase (예: `AccountService`, `UserController`)
+- **Methods**: camelCase, 동사로 시작 (예: `createAccount`, `findUserById`)
+- **Variables**: camelCase (예: `userName`, `totalAmount`)
+- **Constants**: CONSTANT_CASE (예: `MAX_RETRY_COUNT`, `DEFAULT_TIMEOUT`)
+- **Packages**: 소문자, 점 구분 (예: `com.example.bank.service`)
+
+### Code Style
+- **Encoding**: UTF-8 필수
+- **Indentation**: Space 4칸 (Tab 사용 금지)
+- **Line Length**: 100자 권장, 120자 최대
+- **Braces**: K&R 스타일 사용
+
+```java
+// ✅ Correct style
+if (condition) {
+    doSomething();
+} else {
+    doSomethingElse();
+}
+```
+
+### Import Rules
+1. Java standard libraries
+2. Third-party libraries
+3. Project internal packages
+4. static imports (last)
+
+### Logging Standards
+- Use SLF4J with Logback
+- Parameterized messages for performance
+- Mask sensitive information in logs
+- Appropriate log levels (TRACE, DEBUG, INFO, WARN, ERROR)
+
+```java
+// ✅ Correct logging
+LOGGER.info("사용자 로그인 성공: userId={}, loginTime={}", userId, LocalDateTime.now());
+
+// ❌ Avoid string concatenation
+LOGGER.info("사용자 로그인 성공: " + userId + ", " + LocalDateTime.now());
+```
 
 ## 프로젝트 문서
 
