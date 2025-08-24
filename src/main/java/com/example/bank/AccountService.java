@@ -62,4 +62,69 @@ public class AccountService {
         
         return account.getTransactions();
     }
+    
+    public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
+        // 입력 검증
+        if (fromAccountId == null || toAccountId == null) {
+            throw new IllegalArgumentException("Account IDs cannot be null");
+        }
+        
+        if (fromAccountId.equals(toAccountId)) {
+            throw new IllegalArgumentException("Cannot transfer to the same account");
+        }
+        
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        // 계좌 존재 확인
+        Account fromAccount = accounts.get(fromAccountId);
+        Account toAccount = accounts.get(toAccountId);
+        
+        if (fromAccount == null) {
+            throw new IllegalArgumentException("Sender account not found");
+        }
+        
+        if (toAccount == null) {
+            throw new IllegalArgumentException("Recipient account not found");
+        }
+        
+        // 데드락 방지를 위한 순서 정렬 (ID가 작은 계좌부터 락 획득)
+        Account firstLock = fromAccountId < toAccountId ? fromAccount : toAccount;
+        Account secondLock = fromAccountId < toAccountId ? toAccount : fromAccount;
+        
+        synchronized (firstLock) {
+            synchronized (secondLock) {
+                // 잔액 확인
+                if (fromAccount.getBalance().compareTo(amount) < 0) {
+                    throw new IllegalArgumentException("Insufficient balance");
+                }
+                
+                // 송금 실행
+                String transferDescription = description != null ? description : "계좌이체";
+                
+                // 송금인 계좌에서 출금 (TRANSFER_OUT)
+                Transaction outTransaction = new Transaction(
+                    fromAccountId, 
+                    Transaction.TransactionType.TRANSFER_OUT, 
+                    amount, 
+                    transferDescription + " (수취인: " + toAccountId + "번)", 
+                    toAccountId
+                );
+                fromAccount.addTransaction(outTransaction);
+                fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+                
+                // 수취인 계좌에 입금 (TRANSFER_IN)
+                Transaction inTransaction = new Transaction(
+                    toAccountId, 
+                    Transaction.TransactionType.TRANSFER_IN, 
+                    amount, 
+                    transferDescription + " (송금인: " + fromAccountId + "번)", 
+                    fromAccountId
+                );
+                toAccount.addTransaction(inTransaction);
+                toAccount.setBalance(toAccount.getBalance().add(amount));
+            }
+        }
+    }
 }

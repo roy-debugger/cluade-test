@@ -83,4 +83,12 @@ public class Account {
     public synchronized List<Transaction> getTransactions() {
         return new ArrayList<>(transactions);
     }
+    
+    public synchronized void addTransaction(Transaction transaction) {
+        this.transactions.add(transaction);
+    }
+    
+    public synchronized void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
 }

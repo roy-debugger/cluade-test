@@ -9,7 +9,9 @@
       "Bash(winget install:*)",
       "Bash(export JAVA_HOME=\"/c/Program Files/Microsoft/jdk-17.0.16.8-hotspot\")",
       "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

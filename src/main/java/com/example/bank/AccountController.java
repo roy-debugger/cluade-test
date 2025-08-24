@@ -58,8 +58,15 @@ public class AccountController {
         Account account = accountOpt.get();
         List<Transaction> transactions = accountService.getTransactionHistory(id);
         
+        // 송금 대상 계좌 목록 (본인 계좌 제외)
+        List<Account> availableAccounts = accountService.getAllAccounts()
+            .stream()
+            .filter(acc -> !acc.getId().equals(id))
+            .toList();
+        
         model.addAttribute("account", account);
         model.addAttribute("transactions", transactions);
+        model.addAttribute("availableAccounts", availableAccounts);
         return "account-detail";
     }
     
@@ -90,6 +97,37 @@ public class AccountController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
+        return "redirect:/accounts/" + id;
+    }
+    
+    @PostMapping("/accounts/{id}/transfer")
+    public String transfer(@PathVariable Long id,
+                         @RequestParam Long targetAccountId,
+                         @RequestParam BigDecimal amount,
+                         @RequestParam(required = false) String description,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            accountService.transfer(id, targetAccountId, amount, description);
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "송금이 완료되었습니다. 수취인: 계좌번호 " + targetAccountId + "번");
+        } catch (IllegalArgumentException e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("not found")) {
+                if (errorMessage.contains("Recipient")) {
+                    errorMessage = "존재하지 않는 계좌번호입니다.";
+                } else if (errorMessage.contains("Sender")) {
+                    errorMessage = "송금인 계좌를 찾을 수 없습니다.";
+                }
+            } else if (errorMessage.contains("Insufficient balance")) {
+                errorMessage = "잔액이 부족합니다.";
+            } else if (errorMessage.contains("same account")) {
+                errorMessage = "본인 계좌로는 송금할 수 없습니다.";
+            } else if (errorMessage.contains("positive")) {
+                errorMessage = "송금 금액은 0보다 커야 합니다.";
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+        }
+        
         return "redirect:/accounts/" + id;
     }
 }

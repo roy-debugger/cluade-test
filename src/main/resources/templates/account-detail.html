@@ -48,7 +48,7 @@
                 
                 <!-- 거래 폼 -->
                 <div class="row mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0 text-success">💰 입금</h5>
@@ -71,7 +71,7 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0 text-danger">💸 출금</h5>
@@ -89,6 +89,42 @@
                                                placeholder="예: 생활비, 식비 등">
                                     </div>
                                     <button type="submit" class="btn btn-danger w-100">출금하기</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0 text-warning">💳 송금</h5>
+                            </div>
+                            <div class="card-body">
+                                <form th:action="@{/accounts/{id}/transfer(id=${account.id})}" method="post">
+                                    <div class="mb-3">
+                                        <label for="targetAccountId" class="form-label">수취인 계좌</label>
+                                        <select class="form-select" id="targetAccountId" name="targetAccountId" required>
+                                            <option value="">수취인을 선택하세요</option>
+                                            <option th:each="targetAccount : ${availableAccounts}" 
+                                                    th:value="${targetAccount.id}" 
+                                                    th:text="${targetAccount.id + '번 - ' + targetAccount.accountHolder + ' (₩' + #numbers.formatDecimal(targetAccount.balance, 0, 'COMMA', 0, 'POINT') + ')'}"></option>
+                                        </select>
+                                        <div th:if="${#lists.isEmpty(availableAccounts)}" class="form-text text-muted">
+                                            송금 가능한 다른 계좌가 없습니다.
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="transferAmount" class="form-label">송금액 (원)</label>
+                                        <input type="number" class="form-control" id="transferAmount" name="amount" 
+                                               min="1" step="1" th:max="${account.balance}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="transferDescription" class="form-label">송금 메모</label>
+                                        <input type="text" class="form-control" id="transferDescription" name="description" 
+                                               placeholder="예: 생일선물, 용돈 등">
+                                    </div>
+                                    <button type="submit" class="btn btn-warning w-100" 
+                                            th:disabled="${#lists.isEmpty(availableAccounts)}">💳 송금하기</button>
                                 </form>
                             </div>
                         </div>
@@ -116,18 +152,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="transaction : ${transactions}" th:classappend="${transaction.type.name() == 'DEPOSIT' ? 'table-success' : 'table-danger'}">
+                                    <tr th:each="transaction : ${transactions}" 
+                                        th:classappend="${transaction.type.name() == 'DEPOSIT' ? 'table-success' : 
+                                                          transaction.type.name() == 'TRANSFER_IN' ? 'table-info' : 
+                                                          transaction.type.name() == 'WITHDRAWAL' ? 'table-danger' : 'table-warning'}">
                                         <td th:text="${#temporals.format(transaction.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></td>
                                         <td>
                                             <span th:if="${transaction.type.name() == 'DEPOSIT'}" class="badge bg-success">입금</span>
                                             <span th:if="${transaction.type.name() == 'WITHDRAWAL'}" class="badge bg-danger">출금</span>
+                                            <span th:if="${transaction.type.name() == 'TRANSFER_OUT'}" class="badge bg-warning">송금</span>
+                                            <span th:if="${transaction.type.name() == 'TRANSFER_IN'}" class="badge bg-info">입금받음</span>
                                         </td>
                                         <td>
                                             <span th:if="${transaction.type.name() == 'DEPOSIT'}" class="text-success">+₩</span>
                                             <span th:if="${transaction.type.name() == 'WITHDRAWAL'}" class="text-danger">-₩</span>
+                                            <span th:if="${transaction.type.name() == 'TRANSFER_OUT'}" class="text-warning">-₩</span>
+                                            <span th:if="${transaction.type.name() == 'TRANSFER_IN'}" class="text-info">+₩</span>
                                             <span th:text="${#numbers.formatDecimal(transaction.amount, 0, 'COMMA', 0, 'POINT')}"></span>
                                         </td>
-                                        <td th:text="${transaction.description}"></td>
+                                        <td>
+                                            <span th:text="${transaction.description}"></span>
+                                            <span th:if="${transaction.targetAccountId != null}" class="text-muted small d-block">
+                                                <span th:if="${transaction.type.name() == 'TRANSFER_OUT'}">수취인: </span>
+                                                <span th:if="${transaction.type.name() == 'TRANSFER_IN'}">송금인: </span>
+                                                <span th:text="${transaction.targetAccountId}"></span>번
+                                            </span>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
