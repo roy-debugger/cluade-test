@@ -53,126 +53,227 @@ java -jar target/bank-simulator-1.0.0.jar
 
 ## 📋 Java 코딩 표준
 
-### 1. 패키지 구조 (표준 준수)
-```
-com.example.bank/
-├── BankSimulatorApplication.java    # Spring Boot 메인 클래스
-├── Account.java                     # 도메인 엔티티
-├── Transaction.java                 # 도메인 엔티티 (TRANSFER_OUT/IN 포함)
-├── AccountService.java              # 비즈니스 로직 (송금 기능 포함)
-└── AccountController.java           # 웹 컨트롤러
-```
+> **참고**: 상세한 코딩 표준은 다음 문서들을 참조하세요:
+> - [Java 코딩 표준](coding-standards.md) - 명명 규칙, 코드 스타일, 클래스 구조
+> - [Spring Boot 표준](spring-boot-standards.md) - 어노테이션, 보안, 성능 최적화  
+> - [테스트 표준](testing-standards.md) - 테스트 작성 패턴, Mock 사용법
 
-### 2. 명명 규칙 (Google Java Style Guide)
-- **클래스명**: PascalCase (예: `AccountService`, `UserController`)
-- **메서드명**: camelCase, 동사로 시작 (예: `createAccount`, `findUserById`)
-- **변수명**: camelCase (예: `accountHolder`, `totalAmount`)
-- **상수명**: CONSTANT_CASE (예: `MAX_RETRY_COUNT`, `DEFAULT_TIMEOUT`)
-- **boolean 메서드**: is/has/can 접두사 (예: `isActive()`, `hasPermission()`)
+### 1. 메서드 주석 표준 (Javadoc)
 
-### 3. 코드 스타일 표준
-- **인코딩**: UTF-8 필수
-- **들여쓰기**: Space 4칸 (Tab 사용 금지)
-- **줄 길이**: 100자 권장, 120자 최대
-- **중괄호**: K&R 스타일 사용
+#### 주석 작성 원칙
+- **모든 public 메서드**: Javadoc 주석 필수
+- **복잡한 private 메서드**: Javadoc 주석 권장
+- **간단한 getter/setter**: 주석 생략 가능
+- **한글 설명**: 비즈니스 로직의 명확한 이해를 위해 한글 사용
 
+#### Javadoc 태그 사용법
 ```java
-// ✅ 올바른 스타일
-if (condition) {
-    doSomething();
-} else {
-    doSomethingElse();
+/**
+ * 메서드의 목적과 동작을 한 줄로 간단히 설명한다.
+ * 
+ * 필요시 상세 설명을 추가한다. 비즈니스 로직이나 주의사항,
+ * 특별한 동작 방식에 대해 설명할 수 있다.
+ *
+ * @param paramName 파라미터 설명 (null 허용 여부, 제약사항 포함)
+ * @return 반환값 설명 (타입과 의미)
+ * @throws ExceptionType 예외 발생 조건과 상황 설명
+ * @since 1.0.0
+ * @see 관련된 다른 메서드나 클래스
+ */
+```
+
+#### 프로젝트별 주석 예시
+
+**AccountService 메서드 예시**:
+```java
+/**
+ * 새로운 계좌를 생성하고 초기 입금을 처리한다.
+ * 
+ * 계좌 ID는 AtomicLong으로 자동 생성되며, 초기 입금액이 있는 경우
+ * Transaction 객체로 거래 내역을 기록한다.
+ *
+ * @param accountHolder 예금주명 (null이나 빈 문자열 불허)
+ * @param initialDeposit 초기 입금액 (null 허용, 음수 불허)
+ * @return 생성된 Account 객체
+ * @throws IllegalArgumentException 예금주명이 null/빈값이거나 초기입금액이 음수인 경우
+ * @since 1.0.0
+ */
+public Account createAccount(String accountHolder, BigDecimal initialDeposit) {
+    // 구현부
+}
+
+/**
+ * 지정한 계좌에 금액을 입금한다.
+ * 
+ * 입금 처리는 스레드 안전하게 수행되며, 거래 내역이 자동으로 기록된다.
+ *
+ * @param accountId 입금할 계좌 ID
+ * @param amount 입금 금액 (양수만 허용)
+ * @param description 거래 설명 (null 허용시 "Deposit"으로 설정)
+ * @return 업데이트된 Account 객체
+ * @throws IllegalArgumentException 계좌가 존재하지 않거나 입금액이 0 이하인 경우
+ */
+public Account deposit(Long accountId, BigDecimal amount, String description) {
+    // 구현부
+}
+
+/**
+ * 계좌 간 송금을 처리한다.
+ * 
+ * 데드락 방지를 위해 계좌 ID 순서로 락킹하며,
+ * 출금과 입금이 원자적으로 처리된다.
+ *
+ * @param fromAccountId 송금할 계좌 ID
+ * @param toAccountId 받을 계좌 ID  
+ * @param amount 송금 금액 (양수, 송금 계좌 잔액 이하)
+ * @param description 송금 설명
+ * @throws IllegalArgumentException 계좌 미존재, 잔액 부족, 송금액 오류시
+ * @throws IllegalStateException 동일 계좌 간 송금 시도시
+ */
+public void transfer(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
+    // 구현부
 }
 ```
 
-### 4. Import 규칙
+**Account 엔티티 메서드 예시**:
 ```java
-// 1. Java 표준 라이브러리
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
-// 2. 서드파티 라이브러리  
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-
-// 3. 프로젝트 내부 패키지
-import com.example.bank.domain.Account;
-
-// 4. static import (마지막)
-import static org.assertj.core.api.Assertions.assertThat;
-```
-
-### 5. 예외 처리 표준
-```java
-// ✅ 구체적인 예외 타입 사용
-if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-    throw new IllegalArgumentException("송금액은 0보다 커야 합니다");
+/**
+ * 계좌에 금액을 입금한다.
+ * 
+ * 이 메서드는 synchronized로 보호되어 동시성 문제를 방지한다.
+ * 잔액 업데이트와 거래 내역 기록이 원자적으로 수행된다.
+ *
+ * @param amount 입금할 금액 (반드시 양수)
+ * @param description 거래 설명 (null인 경우 "Deposit"으로 설정)
+ * @throws IllegalArgumentException amount가 null이거나 0 이하인 경우
+ */
+public synchronized void deposit(BigDecimal amount, String description) {
+    // 구현부
 }
 
-// ✅ 예외 로깅 (향후 적용 권장)
-try {
-    accountService.transfer(fromId, toId, amount, description);
-} catch (IllegalArgumentException e) {
-    LOGGER.warn("잘못된 송금 요청: {}", e.getMessage(), e);
-    throw e;
+/**
+ * 계좌에서 금액을 출금한다.
+ * 
+ * 잔액 확인 후 출금을 진행하며, 부족시 예외를 발생시킨다.
+ * 이 메서드는 synchronized로 보호된다.
+ *
+ * @param amount 출금할 금액 (반드시 양수, 잔액 이하)
+ * @param description 거래 설명 (null인 경우 "Withdrawal"으로 설정)
+ * @throws IllegalArgumentException amount가 null이거나 0 이하인 경우
+ * @throws IllegalArgumentException 잔액이 부족한 경우
+ */
+public synchronized void withdraw(BigDecimal amount, String description) {
+    // 구현부
 }
 ```
+
+**Controller 메서드 예시**:
+```java
+/**
+ * 계좌 목록 페이지를 표시한다.
+ *
+ * @param model Spring MVC 모델 객체 (accounts 리스트 추가됨)
+ * @return accounts.html 템플릿 이름
+ */
+@GetMapping("/accounts")
+public String listAccounts(Model model) {
+    // 구현부
+}
+
+/**
+ * 새 계좌 생성 요청을 처리한다.
+ * 
+ * 성공 시 계좌 목록으로 리다이렉트하고, 실패 시 계좌 생성 폼으로
+ * 돌아가며 에러 메시지를 표시한다.
+ *
+ * @param accountHolder 예금주명 (필수)
+ * @param initialDeposit 초기 입금액 (선택사항)
+ * @param redirectAttributes 플래시 메시지 전달용
+ * @return 리다이렉트 URL
+ */
+@PostMapping("/accounts")
+public String createAccount(@RequestParam String accountHolder, 
+                           @RequestParam(required = false) BigDecimal initialDeposit,
+                           RedirectAttributes redirectAttributes) {
+    // 구현부
+}
+```
+
+#### 주석 작성 가이드라인
+
+**DO (해야 할 것)**:
+```java
+// ✅ 명확하고 구체적인 설명
+/**
+ * 계좌 잔액이 충분한지 확인한다.
+ *
+ * @param amount 확인할 금액
+ * @return 잔액이 충분하면 true, 부족하면 false
+ */
+
+// ✅ 비즈니스 로직 설명 포함
+/**
+ * 송금 시 데드락을 방지하기 위해 계좌 ID 순서로 락킹한다.
+ * 
+ * A→B, B→A 동시 송금에서도 안전한 처리를 보장한다.
+ */
+
+// ✅ 예외 상황과 제약사항 명시
+/**
+ * @param accountId 계좌 ID (반드시 존재해야 함)
+ * @throws IllegalArgumentException 계좌가 존재하지 않는 경우
+ */
+```
+
+**DON'T (하지 말아야 할 것)**:
+```java
+// ❌ 자명한 내용 반복
+/**
+ * 계좌를 반환한다.
+ * @return 계좌
+ */
+
+// ❌ 구현 세부사항만 설명
+/**
+ * ConcurrentHashMap에서 계좌를 조회한다.
+ */
+
+// ❌ 의미 없는 주석
+/**
+ * 이 메서드는 계좌를 생성하는 메서드이다.
+ */
+```
+
+### 2. 빠른 시작 가이드
+
+#### 프로젝트 클론 및 실행
+```bash
+# 프로젝트 클론
+git clone [repository-url]
+cd bank-simulator
+
+# Maven wrapper 권한 설정 (Linux/Mac)
+chmod +x mvnw
+
+# 애플리케이션 실행
+./mvnw spring-boot:run
+```
+
+#### 기본 개발 워크플로우
+1. **개발 서버 실행**: `./mvnw spring-boot:run`
+2. **테스트 실행**: `./mvnw test`
+3. **코드 품질 검사**: `./mvnw clean verify`
+4. **브라우저 접속**: http://localhost:9090
 
 ## 테스트 작성 가이드
 
-### 1. 테스트 파일 위치
-```
-src/test/java/com/example/bank/
-├── AccountServiceTest.java          # 비즈니스 로직 단위 테스트
-└── BankSimulatorApplicationTests.java # Spring 컨텍스트 통합 테스트
-```
+> **참고**: 상세한 테스트 작성 표준은 [테스트 표준](testing-standards.md)을 참조하세요.
 
-### 2. 테스트 명명 표준 (Java 표준)
-```java
-// ✅ Java 표준 테스트 명명 규칙
-@Test
-@DisplayName("유효한 입금 요청 시 잔액이 정상적으로 증가한다")
-void deposit_WithValidAmount_IncreasesBalance() {
-    // 테스트 구현
-}
-
-@Test 
-@DisplayName("잔액이 부족한 상태에서 출금 시 예외가 발생한다")
-void withdraw_WithInsufficientBalance_ThrowsException() {
-    // 테스트 구현
-}
-
-@Test
-@DisplayName("유효한 송금 요청 시 송금이 성공한다")  
-void transfer_WithValidRequest_Success() {
-    // 테스트 구현
-}
-```
-
-### 3. 테스트 구조 (Given-When-Then 패턴)
-```java
-@Test
-@DisplayName("유효한 입금 요청 시 잔액이 증가한다")
-void deposit_WithValidAmount_IncreasesBalance() {
-    // Given: 테스트 데이터 준비
-    Account account = accountService.createAccount("홍길동", new BigDecimal("1000"));
-    BigDecimal depositAmount = new BigDecimal("500");
-    
-    // When: 테스트 실행
-    Account updatedAccount = accountService.deposit(account.getId(), depositAmount, "테스트 입금");
-    
-    // Then: 결과 검증
-    assertThat(updatedAccount.getBalance()).isEqualTo(new BigDecimal("1500"));
-    assertThat(updatedAccount.getTransactions()).hasSize(2); // 초기입금 + 테스트입금
-}
-```
-
-### 4. 테스트 범위
-- **단위 테스트**: AccountService 비즈니스 로직
-- **통합 테스트**: Spring 컨텍스트 로딩
-- **핵심 시나리오**: 계좌 생성, 입금, 출금, 송금, 잔액 부족
-- **동시성 테스트**: 멀티스레드 환경에서의 송금 안전성
+### 기본 테스트 패턴
+- **명명 규칙**: `methodName_condition_expectedResult`
+- **구조**: Given-When-Then (AAA) 패턴  
+- **범위**: 단위/통합/시스템 테스트 작성
+- **커버리지**: 라인 커버리지 80% 이상 목표
 
 ## 새로운 기능 개발
 

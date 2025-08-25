@@ -22,6 +22,30 @@
 - 테스트 작성 방법
 - 새로운 기능 개발 절차
 
+### 📝 [Java 코딩 표준](coding-standards.md)
+- 명명 규칙 (클래스, 메서드, 변수, 상수)
+- 코딩 스타일 (K&R 브레이스, 공백 사용)
+- Import 구문 정리
+- 클래스 구조 및 주석 작성법
+
+### 🏛️ [Spring Boot 표준](spring-boot-standards.md)
+- 프로젝트 구조 및 패키지 명명
+- Spring 어노테이션 사용법
+- Configuration 클래스 작성
+- 보안 및 성능 최적화
+
+### 🧪 [테스트 표준](testing-standards.md)
+- 테스트 구조 및 명명 규칙
+- 단위/통합/시스템 테스트 작성법
+- Mock 객체 사용 표준
+- 테스트 커버리지 관리
+
+### 📏 [코드 품질 관리](code-quality-standards.md)
+- 정적 분석 도구 설정 (Checkstyle, PMD, SpotBugs)
+- IDE 설정 및 포맷터 규칙
+- Claude Code 체크리스트
+- 품질 지표 및 보고서 생성
+
 ## 문서 활용법
 
 ### Claude Code와의 연동

@@ -148,8 +148,37 @@ LOGGER.info("사용자 로그인 성공: " + userId + ", " + LocalDateTime.now()
 - 데이터 모델과 관계
 
 ### 🔧 개발 가이드 (docs/development-guide.md)
-- 코딩 표준 (명명 규칙, 패키지 구조)
-- 테스트 작성 패턴 (AAA 패턴, 네이밍 규칙)
+- 개발 환경 설정 및 워크플로우
+- 메서드 주석 표준 (Javadoc)
 - 새로운 기능 개발 절차
 
-**중요**: 새로운 코드 작성 시 이 문서들의 패턴과 규칙을 따라 일관성을 유지하세요.
+### 📝 Java 코딩 표준 (docs/coding-standards.md)
+- 명명 규칙 (클래스, 메서드, 변수, 상수)
+- 코딩 스타일 (K&R 브레이스, 공백 사용, Import 순서)
+- 클래스 구조 및 예외 처리 표준
+
+### 🏛️ Spring Boot 표준 (docs/spring-boot-standards.md)
+- 프로젝트 구조 및 패키지 명명
+- Spring 어노테이션 사용법 (@Service, @Controller, @RestController)
+- Configuration 클래스 작성법
+- 보안 코딩 및 성능 최적화
+
+### 🧪 테스트 표준 (docs/testing-standards.md)
+- 테스트 구조 및 명명 규칙
+- Given-When-Then 패턴 적용
+- 단위/통합/시스템 테스트 작성법
+- Mock 객체 사용 및 테스트 커버리지
+
+### 📏 코드 품질 관리 (docs/code-quality-standards.md)
+- 정적 분석 도구 설정 (Checkstyle, PMD, SpotBugs, SonarQube)
+- IDE 설정 및 포맷터 규칙
+- Claude Code 개발 체크리스트
+- 품질 지표 및 지속적인 품질 관리
+
+**중요**: 새로운 코드 작성 시 이 문서들의 패턴과 규칙을 따라 일관성을 유지하세요. 특히 다음 사항들을 준수하세요:
+
+- **명명 규칙**: PascalCase 클래스명, camelCase 메서드/변수명, CONSTANT_CASE 상수명
+- **Javadoc 주석**: 모든 public 메서드에 필수, 파라미터/반환값/예외 상황 명시
+- **동시성 제어**: AtomicLong ID 생성, synchronized 메서드, ConcurrentHashMap 사용
+- **테스트 코드**: `methodName_condition_expectedResult` 패턴, AAA 구조 적용
+- **코드 품질**: 정적 분석 도구 통과, 테스트 커버리지 80% 이상 유지
