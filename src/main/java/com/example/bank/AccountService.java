@@ -62,4 +62,57 @@ public class AccountService {
         
         return account.getTransactions();
     }
+    
+    /**
+     * 계좌 간 송금을 처리한다.
+     * 데드락 방지를 위해 계좌 ID 순서로 락을 획득한다.
+     * 
+     * @param fromAccountId 송금하는 계좌 ID
+     * @param toAccountId 송금받는 계좌 ID
+     * @param amount 송금액 (양수여야 함)
+     * @param description 송금 설명 (옵션)
+     * @return 송금한 계좌 객체
+     * @throws IllegalArgumentException 계좌을 찾을 수 없거나 송금 조건이 맞지 않는 경우
+     */
+    public Account transfer(Long fromAccountId, Long toAccountId, BigDecimal amount, String description) {
+        // 입력 값 검증
+        if (fromAccountId == null || toAccountId == null) {
+            throw new IllegalArgumentException("Account IDs cannot be null");
+        }
+        
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        // 본인 계좌로 송금 방지
+        if (fromAccountId.equals(toAccountId)) {
+            throw new IllegalArgumentException("Cannot transfer to the same account");
+        }
+        
+        // 계좌 존재 확인
+        Account fromAccount = accounts.get(fromAccountId);
+        Account toAccount = accounts.get(toAccountId);
+        
+        if (fromAccount == null) {
+            throw new IllegalArgumentException("Source account not found: " + fromAccountId);
+        }
+        
+        if (toAccount == null) {
+            throw new IllegalArgumentException("Target account not found: " + toAccountId);
+        }
+        
+        // 데드락 방지를 위해 ID 순서로 락 획득
+        Account firstLock = fromAccountId < toAccountId ? fromAccount : toAccount;
+        Account secondLock = fromAccountId < toAccountId ? toAccount : fromAccount;
+        
+        synchronized (firstLock) {
+            synchronized (secondLock) {
+                // 송금 처리
+                fromAccount.transferOut(amount, description, toAccountId);
+                toAccount.transferIn(amount, description, fromAccountId);
+            }
+        }
+        
+        return fromAccount;
+    }
 }

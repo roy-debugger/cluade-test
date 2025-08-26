@@ -64,6 +64,56 @@ public class Account {
         ));
     }
     
+    /**
+     * 계좌에서 다른 계좌로 송금한다.
+     * 
+     * @param amount 송금액 (양수여야 하며 잔액 이하여야 함)
+     * @param description 거래 설명 (null이면 "Transfer"으로 설정)
+     * @param targetAccountId 송금 받을 계좌 ID
+     * @throws IllegalArgumentException 송금액이 null, 0 이하이거나 잔액 부족인 경우
+     */
+    public synchronized void transferOut(BigDecimal amount, String description, Long targetAccountId) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        if (this.balance.compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient balance");
+        }
+        
+        this.balance = this.balance.subtract(amount);
+        this.transactions.add(new Transaction(
+            this.id,
+            Transaction.TransactionType.TRANSFER_OUT,
+            amount,
+            description != null ? description : "Transfer",
+            targetAccountId
+        ));
+    }
+    
+    /**
+     * 다른 계좌로부터 송금을 받는다.
+     * 
+     * @param amount 송금 받을 금액 (양수여야 함)
+     * @param description 거래 설명 (null이면 "Transfer received"으로 설정)
+     * @param sourceAccountId 송금한 계좌 ID
+     * @throws IllegalArgumentException 송금액이 null이거나 0 이하인 경우
+     */
+    public synchronized void transferIn(BigDecimal amount, String description, Long sourceAccountId) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        
+        this.balance = this.balance.add(amount);
+        this.transactions.add(new Transaction(
+            this.id,
+            Transaction.TransactionType.TRANSFER_IN,
+            amount,
+            description != null ? description : "Transfer received",
+            sourceAccountId
+        ));
+    }
+    
     public Long getId() {
         return id;
     }
