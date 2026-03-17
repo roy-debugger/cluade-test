@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+java {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+dependencies {
+	implementation project(':order-domain')
+	implementation project(':inventory-domain')
+	implementation project(':payment-domain')
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+	// implementation 'io.github.springwolf:springwolf-kafka:1.12.0'
+ 	implementation(platform("io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"))
+	// eventuate tram dependencies
+	// implementation 'io.eventuate.tram.core:eventuate-tram-spring-commands-starter'
+	// implementation 'io.eventuate.tram.core:eventuate-tram-spring-messaging-starter'
+	// implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-starter'
+	implementation "io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka"
+	// eventuate saga dependecies
+	implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant-starter"
+	implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl-starter"
+
+    // Provides the UI - optional (recommended)
+    // runtimeOnly 'io.github.springwolf:springwolf-ui:1.12.0'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'mysql:mysql-connector-java:8.0.33'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	annotationProcessor 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,0 +1,43 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: inventory-service
+  datasource:
+    url: jdbc:mysql://localhost/inventory_db
+    username: mysqluser
+    password: mysqlpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: localhost:9092
+eventuate.database.schema: inventory_db
+  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+# springwolf:
+#   docket:
+#     base-package: io.eventuate.examples.tram.sagas.ordersandcustomers
+#     info:
+#       title: ${spring.application.name}
+#       version: 1.0.0
+#     scanner:
+#       async-listener:
+#         enabled: false
+#     servers:
+#       eventuate-producer:
+#         protocol: eventuate-outbox
+#         host: ${spring.datasource.url}
+#       eventuate-consumer:
+#         protocol: kafka
+#         host: ${eventuatelocal.kafka.bootstrap.servers}

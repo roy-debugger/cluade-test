@@ -1,0 +1,192 @@
+services:
+ 
+  database:
+    image: eventuateio/eventuate-mysql8:0.20.0.RELEASE
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+  zookeeper:
+    image: eventuateio/eventuate-zookeeper:0.20.0.RELEASE
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      KAFKA_HEAP_OPTS: -Xmx64m
+  broker:
+    image: "eventuateio/eventuate-kafka:0.20.0.RELEASE"
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_LISTENERS: LC://broker:29092,LX://broker:9092
+      KAFKA_ADVERTISED_LISTENERS: LC://broker:29092,LX://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LC:PLAINTEXT,LX:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LC
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: -Xmx192m
+  cdc-service:
+    image: eventuateio/eventuate-cdc-service:0.18.0.RELEASE
+    # ports:
+      # - "8099:8080"
+    depends_on:
+      - database
+      - broker
+      - zookeeper
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+      # SPRING_PROFILES_ACTIVE: EventuatePolling  ← 이거 제거! (polling 비활성화)
+
+      EVENTUATE_CDC_READER_ORDERREADER_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_ORDERREADER_DATASOURCEURL: jdbc:mysql://database/order_db
+      EVENTUATE_CDC_READER_ORDERREADER_DATASOURCEUSERNAME: mysqluser
+      EVENTUATE_CDC_READER_ORDERREADER_DATASOURCEPASSWORD: mysqlpw
+      EVENTUATE_CDC_READER_ORDERREADER_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_ORDERREADER_LEADERSHIPLOCKPATH: /eventuatelocal/cdc/leader/pipeline/1
+      EVENTUATE_CDC_READER_ORDERREADER_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_ORDERREADER_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_ORDERREADER_OUTBOXID: 1
+      EVENTUATE_CDC_READER_ORDERREADER_MYSQLBINLOGCLIENTUNIQUEID: 1234567890
+      EVENTUATE_CDC_READER_ORDERREADER_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_ORDERREADER_OFFSETSTORAGETOPICNAME: db.history.eventuate.tram
+      EVENTUATE_CDC_READER_ORDERREADER_OFFSETSTOREKEY: ClientEventuateTramOrder
+
+      # INVENTORYREADER: polling → mysql-binlog 변경
+      EVENTUATE_CDC_READER_INVENTORYREADER_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_INVENTORYREADER_DATASOURCEURL: jdbc:mysql://database/inventory_db
+      EVENTUATE_CDC_READER_INVENTORYREADER_DATASOURCEUSERNAME: mysqluser
+      EVENTUATE_CDC_READER_INVENTORYREADER_DATASOURCEPASSWORD: mysqlpw
+      EVENTUATE_CDC_READER_INVENTORYREADER_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_INVENTORYREADER_LEADERSHIPLOCKPATH: /eventuatelocal/cdc/leader/pipeline/2
+      EVENTUATE_CDC_READER_INVENTORYREADER_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_INVENTORYREADER_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_INVENTORYREADER_OUTBOXID: 2
+      EVENTUATE_CDC_READER_INVENTORYREADER_MYSQLBINLOGCLIENTUNIQUEID: 1234567891  # ← 고유값
+      EVENTUATE_CDC_READER_INVENTORYREADER_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_INVENTORYREADER_OFFSETSTORAGETOPICNAME: db.history.eventuate.tram
+      EVENTUATE_CDC_READER_INVENTORYREADER_OFFSETSTOREKEY: ClientEventuateTramInventory  # ← 고유값
+
+      # PAYMENTREADER: polling → mysql-binlog 변경
+      EVENTUATE_CDC_READER_PAYMENTREADER_TYPE: mysql-binlog
+      EVENTUATE_CDC_READER_PAYMENTREADER_DATASOURCEURL: jdbc:mysql://database/payment_db
+      EVENTUATE_CDC_READER_PAYMENTREADER_DATASOURCEUSERNAME: mysqluser
+      EVENTUATE_CDC_READER_PAYMENTREADER_DATASOURCEPASSWORD: mysqlpw
+      EVENTUATE_CDC_READER_PAYMENTREADER_DATASOURCEDRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      EVENTUATE_CDC_READER_PAYMENTREADER_LEADERSHIPLOCKPATH: /eventuatelocal/cdc/leader/pipeline/3
+      EVENTUATE_CDC_READER_PAYMENTREADER_CDCDBUSERNAME: root
+      EVENTUATE_CDC_READER_PAYMENTREADER_CDCDBPASSWORD: rootpassword
+      EVENTUATE_CDC_READER_PAYMENTREADER_OUTBOXID: 3
+      EVENTUATE_CDC_READER_PAYMENTREADER_MYSQLBINLOGCLIENTUNIQUEID: 1234567892  # ← 고유값
+      EVENTUATE_CDC_READER_PAYMENTREADER_READOLDDEBEZIUMDBOFFSETSTORAGETOPIC: "false"
+      EVENTUATE_CDC_READER_PAYMENTREADER_OFFSETSTORAGETOPICNAME: db.history.eventuate.tram
+      EVENTUATE_CDC_READER_PAYMENTREADER_OFFSETSTOREKEY: ClientEventuateTramPayment  # ← 고유값
+
+      EVENTUATE_CDC_PIPELINE_P1_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_P1_READER: ORDERREADER
+      EVENTUATE_CDC_PIPELINE_P1_EVENTUATEDATABASESCHEMA: order_db
+
+      EVENTUATE_CDC_PIPELINE_P2_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_P2_READER: INVENTORYREADER
+      EVENTUATE_CDC_PIPELINE_P2_EVENTUATEDATABASESCHEMA: inventory_db
+
+      EVENTUATE_CDC_PIPELINE_P3_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_P3_READER: PAYMENTREADER
+      EVENTUATE_CDC_PIPELINE_P3_EVENTUATEDATABASESCHEMA: payment_db
+
+
+
+      
+  # order-cdcservice:
+  #   image: eventuateio/eventuate-cdc-service:0.18.0.RELEASE
+  #   # ports:
+  #     # - "8099:8080"
+  #   depends_on:
+  #     - database
+  #     - broker
+  #     - zookeeper
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:mysql://database/order_db
+  #     SPRING_DATASOURCE_USERNAME: mysqluser
+  #     SPRING_DATASOURCE_PASSWORD: mysqlpw
+  #     SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+  #     EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+  #     EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+  #     # EVENTUATELOCAL_CDC_DB_USER_NAME: mysqluser
+  #     # EVENTUATELOCAL_CDC_DB_PASSWORD: mysqlpw
+  #     EVENTUATELOCAL_CDC_READER_NAME: order-reader
+  #     EVENTUATELOCAL_CDC_MYSQL_BINLOG_CLIENT_UNIQUE_ID: 1234567890
+  #     EVENTUATELOCAL_CDC_READ_OLD_DEBEZIUM_DB_OFFSET_STORAGE_TOPIC: "false"
+  #     EVENTUATE_CDC_READER_ORDERREADER2_LEADERSHIPLOCKPATH: /eventuatelocal/cdc/leader/pipeline/1
+  #     SPRING_PROFILES_ACTIVE: EventuatePolling
+  #     EVENTUATE_DATABASE_SCHEMA: order_db
+  #     EVENTUATE_OUTBOX_ID: 1
+  #     # ACTIVEMQ_URL: tcp://broker:61616
+  #     # RABBITMQ_BROKER_ADDRESSES: broker
+  # inventory-cdcservice:
+  #   image: eventuateio/eventuate-cdc-service:0.18.0.RELEASE
+  #   # ports:
+  #     # - "8099:8080"
+  #   depends_on:
+  #     - database
+  #     - broker
+  #     - zookeeper
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:mysql://database/inventory_db
+  #     SPRING_DATASOURCE_USERNAME: mysqluser
+  #     SPRING_DATASOURCE_PASSWORD: mysqlpw
+  #     SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+  #     EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+  #     EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+  #     # EVENTUATELOCAL_CDC_DB_USER_NAME: mysqluser
+  #     # EVENTUATELOCAL_CDC_DB_PASSWORD: mysqlpw
+  #     EVENTUATELOCAL_CDC_READER_NAME: inventory-reader
+  #     EVENTUATELOCAL_CDC_MYSQL_BINLOG_CLIENT_UNIQUE_ID: 1234567890
+  #     EVENTUATELOCAL_CDC_READ_OLD_DEBEZIUM_DB_OFFSET_STORAGE_TOPIC: "false"
+  #     SPRING_PROFILES_ACTIVE: EventuatePolling
+  #     EVENTUATE_DATABASE_SCHEMA: inventory_db
+  #     EVENTUATE_OUTBOX_ID: 1
+  #     # ACTIVEMQ_URL: tcp://broker:61616
+  #     # RABBITMQ_BROKER_ADDRESSES: broker
+  # payment-cdcservice:
+  #   image: eventuateio/eventuate-cdc-service:0.18.0.RELEASE
+  #   # ports:
+  #     # - "8099:8080"
+  #   depends_on:
+  #     - database
+  #     - broker
+  #     - zookeeper
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:mysql://database/payment_db
+  #     SPRING_DATASOURCE_USERNAME: mysqluser
+  #     SPRING_DATASOURCE_PASSWORD: mysqlpw
+  #     SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+  #     EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: broker:29092
+  #     EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING: zookeeper:2181
+  #     # EVENTUATELOCAL_CDC_DB_USER_NAME: mysqluser
+  #     # EVENTUATELOCAL_CDC_DB_PASSWORD: mysqlpw
+  #     EVENTUATELOCAL_CDC_READER_NAME: payment-reader
+  #     EVENTUATELOCAL_CDC_MYSQL_BINLOG_CLIENT_UNIQUE_ID: 1234567890
+  #     EVENTUATELOCAL_CDC_READ_OLD_DEBEZIUM_DB_OFFSET_STORAGE_TOPIC: "false"
+  #     SPRING_PROFILES_ACTIVE: EventuatePolling
+  #     EVENTUATE_DATABASE_SCHEMA: payment_db
+  #     EVENTUATE_OUTBOX_ID: 1
+  #     # ACTIVEMQ_URL: tcp://broker:61616
+  #     # RABBITMQ_BROKER_ADDRESSES: broker
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8888:8080
+    depends_on:
+      - broker
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
+      # KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+      DYNAMIC_CONFIG_ENABLED: 'true'

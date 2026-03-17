@@ -1,0 +1,8 @@
+rootProject.name = 'saga-demo'
+
+include 'order'
+include 'order-domain'
+include 'payment'
+include 'payment-domain'
+include 'inventory'
+include 'inventory-domain'
